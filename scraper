@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import logging
+
+from claridad_scraper import Scraper, DBSink
+from claridad_scraper.globals import BASE_SITE
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    db_sink = DBSink('out')
+    scraper = Scraper(BASE_SITE, db_sink)
+    scraper.run()

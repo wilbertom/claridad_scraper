@@ -7,17 +7,9 @@ class Parser:
         self.site = site
         self.link_helpers = LinkHelpers(site)
 
-    def parse(self, response):
-        if self._is_html(response):
-            return BeautifulSoup(response.content, 'html.parser')
-        elif self._is_pdf(response) \
-                or self._is_gif(response) \
-                or self._is_jpeg(response):
-            return response.content
-        else:
-            return None
+    def links(self, response):
+        parsed = self._parse(response)
 
-    def links(self, parsed):
         if not isinstance(parsed, BeautifulSoup):
             # do not look for links in things that aren't HTML pages
             return []
@@ -31,6 +23,16 @@ class Parser:
                 links.append(link)
 
         return list(set(links))
+
+    def _parse(self, response):
+        if self._is_html(response):
+            return BeautifulSoup(response.content, 'html.parser')
+        elif self._is_pdf(response):
+            raise ValueError("Downloaded a PDF but these shouldn't be downloaded")
+        elif self._is_gif(response) or self._is_jpeg(response):
+            return response.content
+        else:
+            return None
 
     def _is_pdf(self, response):
         return response.headers['content-type'].split(';')[0] == 'application/pdf'

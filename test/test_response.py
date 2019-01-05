@@ -2,7 +2,7 @@ from unittest import TestCase
 import requests
 
 from claridad_scraper import Response, DBSink
-from test.support.responses import HTML_UTF_8_RESPONSE, HTML_ASCII_RESPONSE, HTML_ISO_8859_1_RESPONSE
+from test.support.responses import HTML_UTF_8_CONTENT, HTML_ASCII_CONTENT, HTML_ISO_8859_1_CONTENT, HTML_CONTENT
 
 
 class TestResponse(TestCase):
@@ -49,3 +49,67 @@ class TestResponse(TestCase):
         self.assertEquals(response.content, requests_response.content)
         self.assertEquals(response.status_code, requests_response.status_code)
         self.assertEquals(response.headers, requests_response.headers)
+
+    def test_guess_content_encoding_html_response_when_ascii(self):
+        response = Response('http://example.com/', HTML_ASCII_CONTENT)
+        self.assertIsNone(response.encoding)
+
+        response.guess_content_encoding()
+
+        self.assertEquals(response.encoding, 'us-ascii')
+
+    def test_guess_content_encoding_html_response_when_utf_8(self):
+        response = Response('http://example.com/', HTML_UTF_8_CONTENT)
+        self.assertIsNone(response.encoding)
+
+        response.guess_content_encoding()
+
+        self.assertEquals(response.encoding, 'utf-8')
+
+    def test_guess_content_encoding_html_response_when_iso_8859_1(self):
+        response = Response('http://example.com/', HTML_ISO_8859_1_CONTENT)
+        self.assertIsNone(response.encoding)
+
+        response.guess_content_encoding()
+
+        self.assertEquals(response.encoding, 'iso-8859-1')
+
+    def test_encoding_defaults_to_none(self):
+        response = Response('http://example.com', HTML_CONTENT)
+        self.assertIsNone(response.encoding)
+
+    def test_text_cannot_be_accessed_without_setting_encoding(self):
+        response = Response('http://example.com', HTML_CONTENT)
+
+        with self.assertRaises(ValueError):
+            response.text
+
+    def test_text_returns_encoded_utf_8_content_correctly(self):
+        response = Response('http://example.com', HTML_UTF_8_CONTENT)
+        response.guess_content_encoding()
+
+        self.assertIn('Suscríbete', response.text, 'UTF string incorrect')
+
+    def test_text_returns_encoded_iso_8859_1_content_correctly(self):
+        response = Response('http://example.com', HTML_ISO_8859_1_CONTENT)
+        response.guess_content_encoding()
+
+        self.assertIn('SuscrÃ\xadbete', response.text, 'ISO string incorrect')
+
+    def test_utf_8_text_cannot_be_accessed_without_setting_encoding(self):
+        response = Response('http://example.com', HTML_CONTENT)
+
+        with self.assertRaises(ValueError):
+            response.utf_8_text
+
+    def test_utf_8_text_returns_encoded_utf_8_content_correctly(self):
+        response = Response('http://example.com', HTML_UTF_8_CONTENT)
+        response.guess_content_encoding()
+
+        self.assertIn('Suscríbete', response.utf_8_text, 'UTF string incorrect')
+
+    def test_utf_8_text_returns_encoded_iso_8859_1_content_correctly(self):
+        response = Response('http://example.com', HTML_ISO_8859_1_CONTENT)
+        response.guess_content_encoding()
+
+        self.assertIn('Suscríbete', response.utf_8_text, 'UTF string incorrect')

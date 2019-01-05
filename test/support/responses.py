@@ -4,7 +4,7 @@ with open('test/support/files/example.pdf', 'rb') as f:
     _PDF = f.read()
 
 
-_PAGE = """
+HTML_CONTENT = """
 <html>
   <head></head>
   <body>
@@ -33,8 +33,19 @@ _ERROR = """
 """
 
 HTML_RESPONSE = Response(
-    'http://example.com', _PAGE, headers={'content-type': 'text/html; charset=utf-8'}
+    'http://example.com', HTML_CONTENT.encode('utf=8'), headers={'content-type': 'text/html; charset=utf-8'}
 )
+
+
+with open('test/support/files/utf_8.html', 'rb') as f:
+    HTML_UTF_8_CONTENT = f.read()
+
+with open('test/support/files/iso_8859_1.html', 'rb') as f:
+    HTML_ISO_8859_1_CONTENT = f.read()
+
+with open('test/support/files/ascii.html', 'rb') as f:
+    HTML_ASCII_CONTENT = f.read()
+
 
 PDF_RESPONSE = Response(
     'http://example.com/example.pdf', _PDF, headers={'content-type': 'application/pdf; charset=utf-8'}
@@ -53,5 +64,5 @@ ANOTHER_RESPONSE = Response(
 )
 
 ERROR_RESPONSE = Response(
-    'http://example.com/error.html', _ERROR, status_code=500, headers={'content-type': 'text/html; charset=utf-8'}
+    'http://example.com/error.html', _ERROR.encode('utf=8'), status_code=500, headers={'content-type': 'text/html; charset=utf-8'}
 )

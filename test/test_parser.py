@@ -1,8 +1,7 @@
 from unittest import TestCase
 from claridad_scraper import Parser
-from bs4 import BeautifulSoup
 
-from test.support.responses import HTML_RESPONSE, PDF_RESPONSE, ANOTHER_RESPONSE, JPG_RESPONSE, GIF_RESPONSE
+from test.support.responses import HTML_RESPONSE, PDF_RESPONSE
 
 
 class TestParser(TestCase):

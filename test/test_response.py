@@ -15,6 +15,7 @@ class TestResponse(TestCase):
     def test_from_requests_response(self):
         requests_response = requests.get('http://example.com')
         response = Response.from_requests_response(requests_response)
+        response.guess_content_encoding()
 
         self.assertEquals(response.url, requests_response.url)
         self.assertEquals(response.content, requests_response.content)
@@ -25,6 +26,7 @@ class TestResponse(TestCase):
         link = 'http://example.com'
         requests_response = requests.get(link)
         response = Response.from_requests_response(requests_response)
+        response.guess_content_encoding()
         self.sink.save(response)
         record_id = self.sink.id(response.url)
         record = self.sink.get(record_id)
@@ -37,6 +39,7 @@ class TestResponse(TestCase):
         self.assertEquals(response.headers, requests_response.headers)
 
     def test_from_db_record_when_saved_directly_from_a_requests_response(self):
+        self.skipTest('We are deciding to only allow our response wrapper')
         link = 'http://example.com'
         requests_response = requests.get(link)
         self.sink.save(requests_response)
@@ -49,6 +52,14 @@ class TestResponse(TestCase):
         self.assertEquals(response.content, requests_response.content)
         self.assertEquals(response.status_code, requests_response.status_code)
         self.assertEquals(response.headers, requests_response.headers)
+
+    def test_guess_content_encoding_when_html_response_doesnt_specify_encoding(self):
+        response = Response('http://example.com/', HTML_CONTENT)
+        self.assertIsNone(response.encoding)
+
+        response.guess_content_encoding()
+
+        self.assertIsNone(response.encoding)
 
     def test_guess_content_encoding_html_response_when_ascii(self):
         response = Response('http://example.com/', HTML_ASCII_CONTENT)
@@ -96,11 +107,10 @@ class TestResponse(TestCase):
 
         self.assertIn('SuscrÃ\xadbete', response.text, 'ISO string incorrect')
 
-    def test_utf_8_text_cannot_be_accessed_without_setting_encoding(self):
+    def test_utf_8_text_falls_back_to_none_when_we_dont_know_the_encoding(self):
         response = Response('http://example.com', HTML_CONTENT)
 
-        with self.assertRaises(ValueError):
-            response.utf_8_text
+        self.assertIsNone(response.utf_8_text)
 
     def test_utf_8_text_returns_encoded_utf_8_content_correctly(self):
         response = Response('http://example.com', HTML_UTF_8_CONTENT)

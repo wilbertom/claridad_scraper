@@ -4,6 +4,8 @@ import requests
 import shutil
 import json
 
+from .response import Response
+
 
 class DBSink:
     def __init__(self, fs_dir):
@@ -21,6 +23,9 @@ class DBSink:
             os.mkdir(self._pages_dir)
 
     def save(self, response):
+        if not isinstance(response, Response):
+            raise ValueError('We only support saving our response wrapper')
+
         headers = self._headers(response)
 
         return self._table.insert({
@@ -29,7 +34,8 @@ class DBSink:
             'status_code':  response.status_code,
             'headers': json.dumps(headers),
             'error': response.status_code != requests.codes.ok,
-            'content_type': headers['content-type'].split(';')[0]
+            'content_type': headers['content-type'].split(';')[0],
+            'text': response.utf_8_text,
         })
 
     def get(self, id):
@@ -45,6 +51,9 @@ class DBSink:
 
     def content(self, record):
         return record['content']
+
+    def text(self, record):
+        return record['text']
 
     def link(self, record):
         return record['link']

@@ -1,8 +1,9 @@
 import os
 from unittest import TestCase
+import requests
 
 from claridad_scraper import DBSink, Response
-from test.support.responses import HTML_RESPONSE, PDF_RESPONSE, ERROR_RESPONSE
+from test.support.responses import HTML_RESPONSE, PDF_RESPONSE, ERROR_RESPONSE, HTML_UTF_8_CONTENT, HTML_CONTENT
 
 
 class TestDBSink(TestCase):
@@ -89,6 +90,12 @@ class TestDBSink(TestCase):
 
         self.assertEquals(self.db_sink.content_type(record), 'text/html')
 
+    def test_it_cant_save_requests_responses(self):
+        response = requests.get('http://example.com')
+
+        with self.assertRaises(ValueError):
+            self.db_sink.save(response)
+
     def test_it_saves_the_http_headers(self):
         id = self.db_sink.save(HTML_RESPONSE)
         record = self.db_sink.get(id)
@@ -114,3 +121,24 @@ class TestDBSink(TestCase):
         record = self.db_sink.get(id)
 
         self.assertEquals(self.db_sink.status_code(record), HTML_RESPONSE.status_code)
+
+    def test_it_saves_the_text_for_html_responses(self):
+        response = Response(
+            'http://example.com', HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+        response.guess_content_encoding()
+        id = self.db_sink.save(response)
+        record = self.db_sink.get(id)
+
+        self.assertIsNotNone(self.db_sink.text(record))
+        self.assertEquals(self.db_sink.text(record), response.utf_8_text)
+
+    def test_it_saves_none_text_for_html_responses_without_encoding(self):
+        response = Response(
+            'http://example.com', HTML_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+        response.guess_content_encoding()
+        id = self.db_sink.save(response)
+        record = self.db_sink.get(id)
+
+        self.assertIsNone(self.db_sink.text(record))

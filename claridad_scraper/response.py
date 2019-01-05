@@ -35,10 +35,17 @@ class Response:
 
     @property
     def utf_8_text(self):
-        return bytes(self.text, self.encoding).decode('utf-8')
+        try:
+            return bytes(self.text, self.encoding).decode('utf-8')
+        except ValueError:
+            return None
 
     def _parse_encoding(self, soup):
         meta = soup.find('meta', {'http-equiv': 'Content-Type'})
+
+        if meta is None:
+            return self.encoding
+
         return meta['content'].split('=')[1].lower()
 
     def __init__(self, url, content, status_code=200, headers=None,  encoding=None):

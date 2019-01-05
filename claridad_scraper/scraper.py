@@ -4,6 +4,7 @@ import logging
 import sys
 from .parser import Parser
 from .cache import Cache
+from .response import Response
 
 
 class Scraper:
@@ -22,40 +23,40 @@ class Scraper:
         self._logger.addHandler(fh)
 
     def run(self):
-        self._scrape(self._site)
-        self._logger.info('Scraped {} links'.format(len(self._links)))
-
-    def _scrape(self, link):
         try:
-            if link in self._links:
-                return
-
-            self._logger.info('Fetching {}'.format(link))
-
-            self._links.add(link)
-            response = self._get_link(link)
-
-            if response.status_code != requests.codes.ok:
-                self._logger.error(response)
-
-            else:
-                # import pdb; pdb.set_trace()
-                parsed = self._parser.parse(response)
-
-                if parsed is None:
-                    self._logger.warning("Ignored unknown content {}".format(response.url))
-                    return
-
-                links = self._parser.links(parsed)
-
-                for link in links:
-                    self._scrape(link)
-
+            self._scrape(self._site)
         except KeyboardInterrupt:
             self._logger.info('Shutdown while scrapping {}'.format(link))
             sys.exit(0)
 
+        self._logger.info('Scraped {} links'.format(len(self._links)))
+
+    def skip(self, link):
+        if link in self._links:
+            return True
+
+        if 'contentpdf.html?news' in link:
+            return True
+
+        return False
+
+    def _scrape(self, link):
+        if self.skip(link):
+            return
+
+        response = self._get_link(link)
+
+        if response.status_code != requests.codes.ok:
+            self._logger.error("Error {}".format(response.url))
+            return
+
+        links = self._parser.links(response)
+
+        for link in links:
+            self._scrape(link)
+
     def _get_link(self, link):
+        self._links.add(link)
         response = self._cache.cached(link)
 
         if response is not None:
@@ -63,7 +64,7 @@ class Scraper:
             return response
         else:
             time.sleep(self._sleep)
-            response = requests.get(link)
-            self._logger.info("Fetched {}".format(link))
-            self._sink.save(link, response)
+            response = Response.from_requests_response(requests.get(link))
+            self._logger.info("Fetched {}".format(response.url))
+            self._sink.save(response)
             return response

@@ -10,17 +10,11 @@ from .response import Response
 class DBSink:
     def __init__(self, fs_dir):
         self._fs_dir = fs_dir
-        self._pdfs_dir = os.path.join(self._fs_dir, 'pdfs')
-        self._images_dir = os.path.join(self._fs_dir, 'images')
-        self._pages_dir = os.path.join(self._fs_dir, 'pages')
         self._db = dataset.connect('sqlite:///{}'.format(os.path.join(self._fs_dir, 'db.sqlite3')))
         self._table = self._db['entries']
 
         if not os.path.isdir(self._fs_dir):
             os.mkdir(self._fs_dir)
-            os.mkdir(self._pdfs_dir)
-            os.mkdir(self._images_dir)
-            os.mkdir(self._pages_dir)
 
     def save(self, response):
         if not isinstance(response, Response):
@@ -36,6 +30,7 @@ class DBSink:
             'error': response.status_code != requests.codes.ok,
             'content_type': headers['content-type'].split(';')[0],
             'text': response.utf_8_text,
+            'encoding': response.encoding,
         })
 
     def get(self, id):
@@ -69,6 +64,9 @@ class DBSink:
 
     def status_code(self, record):
         return record['status_code']
+
+    def encoding(self, record):
+        return record['encoding']
 
     def destroy(self):
         shutil.rmtree(self._fs_dir)

@@ -122,6 +122,18 @@ class TestDBSink(TestCase):
 
         self.assertEquals(self.db_sink.status_code(record), HTML_RESPONSE.status_code)
 
+    def test_it_saves_the_encoding(self):
+        response = Response(
+            'http://example.com', HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+        response.guess_content_encoding()
+
+        id = self.db_sink.save(response)
+        record = self.db_sink.get(id)
+
+        self.assertEquals(self.db_sink.encoding(record), 'utf-8')
+        self.assertEquals(self.db_sink.encoding(record), response.encoding)
+
     def test_it_saves_the_text_for_html_responses(self):
         response = Response(
             'http://example.com', HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}

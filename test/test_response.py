@@ -21,6 +21,7 @@ class TestResponse(TestCase):
         self.assertEquals(response.content, requests_response.content)
         self.assertEquals(response.status_code, requests_response.status_code)
         self.assertEquals(response.headers, requests_response.headers)
+        self.assertEquals(response.encoding, requests_response.encoding)
 
     def test_from_db_record_when_saved_with_our_response_wrapper(self):
         link = 'http://example.com'
@@ -37,6 +38,7 @@ class TestResponse(TestCase):
         self.assertEquals(response.content, requests_response.content)
         self.assertEquals(response.status_code, requests_response.status_code)
         self.assertEquals(response.headers, requests_response.headers)
+        self.assertEquals(response.encoding, requests_response.encoding)
 
     def test_from_db_record_when_saved_directly_from_a_requests_response(self):
         self.skipTest('We are deciding to only allow our response wrapper')
@@ -52,6 +54,7 @@ class TestResponse(TestCase):
         self.assertEquals(response.content, requests_response.content)
         self.assertEquals(response.status_code, requests_response.status_code)
         self.assertEquals(response.headers, requests_response.headers)
+        self.assertEquals(response.encoding, requests_response.encoding)
 
     def test_guess_content_encoding_when_html_response_doesnt_specify_encoding(self):
         response = Response('http://example.com/', HTML_CONTENT)

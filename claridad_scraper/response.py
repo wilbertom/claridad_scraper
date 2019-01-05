@@ -10,6 +10,7 @@ class Response:
             response.content,
             response.status_code,
             response.headers,
+            response.encoding,
         )
 
     @classmethod
@@ -19,6 +20,7 @@ class Response:
             sink.content(record),
             sink.status_code(record),
             sink.headers(record),
+            sink.encoding(record),
         )
 
     def guess_content_encoding(self):

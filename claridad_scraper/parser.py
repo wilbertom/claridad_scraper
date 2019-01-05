@@ -14,19 +14,22 @@ class Parser:
             # do not look for links in things that aren't HTML pages
             return []
 
-        links = []
+        links = set([])
 
         for anchor in parsed.find_all('a'):
             link = self.link_helpers.expand(anchor.get('href'))
 
             if self._should_scrape(link):
-                links.append(link)
+                links.add(link)
 
-        return list(set(links))
+        return list(links)
 
     def _parse(self, response):
         if self._is_html(response):
-            return BeautifulSoup(response.content, 'html.parser')
+            if response.utf_8_text is None:
+                raise ValueError("Can't parse a html webpage without know its encoding")
+
+            return BeautifulSoup(response.utf_8_text, 'html.parser')
         elif self._is_pdf(response):
             raise ValueError("Downloaded a PDF but these shouldn't be downloaded")
         elif self._is_gif(response) or self._is_jpeg(response):

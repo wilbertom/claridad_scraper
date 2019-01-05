@@ -1,6 +1,6 @@
 from unittest import TestCase
 import requests
-from claridad_scraper import DBSink, Cache
+from claridad_scraper import DBSink, Cache, Response
 
 
 class TestCache(TestCase):
@@ -14,7 +14,7 @@ class TestCache(TestCase):
 
     def test_it_knows_when_a_link_has_been_cached(self):
         link = 'http://example.com/'
-        response = requests.get(link)
+        response = Response.from_requests_response(requests.get(link))
         self.sink.save(response)
         self.assertIsNotNone(self.cache.cached(link))
 
@@ -24,7 +24,7 @@ class TestCache(TestCase):
 
     def test_it_can_return_the_cached_response(self):
         link = 'http://example.com/'
-        response = requests.get(link)
+        response = Response.from_requests_response(requests.get(link))
 
         self.sink.save(response)
         cached_response = self.cache.cached(link)

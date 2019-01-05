@@ -20,11 +20,11 @@ class DBSink:
             os.mkdir(self._images_dir)
             os.mkdir(self._pages_dir)
 
-    def save(self, link, response):
+    def save(self, response):
         headers = self._headers(response)
 
         return self._table.insert({
-            'link': link,
+            'link': response.url,
             'content': response.content,
             'status_code':  response.status_code,
             'headers': json.dumps(headers),

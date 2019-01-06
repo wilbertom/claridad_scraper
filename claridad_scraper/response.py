@@ -38,7 +38,7 @@ class Response:
     @property
     def utf_8_text(self):
         try:
-            return bytes(self.text, self.encoding).decode('utf-8')
+            return self.content.decode('utf-8')
         except ValueError:
             return None
 

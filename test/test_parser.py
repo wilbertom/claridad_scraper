@@ -58,7 +58,3 @@ class TestParser(TestCase):
             'http://example.com/images/articles/Imagen_Títeres,-sin-querer-queriendo-w_xlg.jpg',
             links
         )
-
-    def test_links_raises_an_error_if_the_parser_doesnt_know_the_page_encoding(self):
-        with self.assertRaises(ValueError):
-            self.parser.links(HTML_RESPONSE)

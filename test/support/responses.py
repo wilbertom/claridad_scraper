@@ -4,7 +4,7 @@ with open('test/support/files/example.pdf', 'rb') as f:
     _PDF = f.read()
 
 
-HTML_CONTENT = """
+HTML_CONTENT = bytes("""
 <html>
   <head></head>
   <body>
@@ -21,19 +21,19 @@ HTML_CONTENT = """
     <a href="http://example.com/" />
   </body>
 </html>
-"""
+""", 'utf-8')
 
-_ERROR = """
+_ERROR = bytes("""
 <html>
   <head></head>
   <body>
     <h1>Internal Server Error</h1>
   </body>
 </html>
-"""
+""", 'utf-8')
 
 HTML_RESPONSE = Response(
-    'http://example.com', HTML_CONTENT.encode('utf=8'), headers={'content-type': 'text/html; charset=utf-8'}
+    'http://example.com', HTML_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
 )
 
 
@@ -64,5 +64,5 @@ ANOTHER_RESPONSE = Response(
 )
 
 ERROR_RESPONSE = Response(
-    'http://example.com/error.html', _ERROR.encode('utf=8'), status_code=500, headers={'content-type': 'text/html; charset=utf-8'}
+    'http://example.com/error.html', _ERROR, status_code=500, headers={'content-type': 'text/html; charset=utf-8'}
 )

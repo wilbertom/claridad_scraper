@@ -110,11 +110,6 @@ class TestResponse(TestCase):
 
         self.assertIn('SuscrÃ\xadbete', response.text, 'ISO string incorrect')
 
-    def test_utf_8_text_falls_back_to_none_when_we_dont_know_the_encoding(self):
-        response = Response('http://example.com', HTML_CONTENT)
-
-        self.assertIsNone(response.utf_8_text)
-
     def test_utf_8_text_returns_encoded_utf_8_content_correctly(self):
         response = Response('http://example.com', HTML_UTF_8_CONTENT)
         response.guess_content_encoding()

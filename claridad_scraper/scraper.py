@@ -26,7 +26,7 @@ class Scraper:
         try:
             self._scrape(self._site)
         except KeyboardInterrupt:
-            self._logger.info('Shutdown while scrapping {}'.format(link))
+            self._logger.info('Shutdown while scrapping')
             sys.exit(0)
 
         self._logger.info('Scraped {} links'.format(len(self._links)))
@@ -41,8 +41,12 @@ class Scraper:
         return False
 
     def _scrape(self, link):
+        if link == self._site.rstrip('/'):
+            self._logger.info('Transforming special site link')
+            link = link + '/'
+
         if self.skip(link):
-            return
+            return []
 
         response = self._get_link(link)
 
@@ -55,6 +59,8 @@ class Scraper:
         for link in links:
             self._scrape(link)
 
+        return links
+
     def _get_link(self, link):
         self._links.add(link)
         response = self._cache.cached(link)
@@ -64,7 +70,21 @@ class Scraper:
             return response
         else:
             time.sleep(self._sleep)
+
+            self._logger.info("Fetching {}".format(link))
+
             response = Response.from_requests_response(requests.get(link))
+            if self._parser._is_html(response):
+                response.guess_content_encoding()
+
+            if link != response.url:
+                self._logger.warning(
+                    'Link is not in the same as url: {}, {}. This will result in cache misses.'.format(
+                        link, response.url
+                    )
+                )
+
             self._logger.info("Fetched {}".format(response.url))
             self._sink.save(response)
+
             return response

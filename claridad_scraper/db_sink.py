@@ -71,5 +71,12 @@ class DBSink:
     def destroy(self):
         shutil.rmtree(self._fs_dir)
 
+    def query(self, link_pattern):
+        statement = self._table.table.select(
+            self._table.table.c.link.like('%{}%'.format(link_pattern))
+        )
+
+        return self._db.query(statement)
+
     def _headers(self, response):
         return {k.lower(): v for k, v in dict(response.headers).items()}

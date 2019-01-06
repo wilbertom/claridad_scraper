@@ -145,12 +145,56 @@ class TestDBSink(TestCase):
         self.assertIsNotNone(self.db_sink.text(record))
         self.assertEquals(self.db_sink.text(record), response.utf_8_text)
 
-    def test_it_saves_none_text_for_html_responses_without_encoding(self):
-        response = Response(
-            'http://example.com', HTML_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+    def test_query_it_returns_entries_that_match_the_pattern_in_a_query_param(self):
+        response_1 = Response(
+            'http://example.com/some/page/?pattern_1',
+            HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
         )
-        response.guess_content_encoding()
-        id = self.db_sink.save(response)
-        record = self.db_sink.get(id)
+        response_2 = Response(
+            'http://example.com/pattern_2.html',
+            HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
 
-        self.assertIsNone(self.db_sink.text(record))
+        id_1 = self.db_sink.save(response_1)
+        self.db_sink.save(response_2)
+
+        self.assertListEqual(
+            [row['id'] for row in self.db_sink.query('pattern_1')],
+            [id_1],
+        )
+
+    def test_query_it_returns_entries_that_match_the_pattern_in_a_page(self):
+        response_1 = Response(
+            'http://example.com/some/page/?pattern_1',
+            HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+        response_2 = Response(
+            'http://example.com/pattern_2/page.html',
+            HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+
+        self.db_sink.save(response_1)
+        id_2 = self.db_sink.save(response_2)
+
+        self.assertListEqual(
+            [row['id'] for row in self.db_sink.query('pattern_2')],
+            [id_2],
+        )
+
+    def test_query_it_returns_entries_that_match_the_pattern_in_the_entire_url(self):
+        response_1 = Response(
+            'http://example.com/some/page/?pattern_1',
+            HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+        response_2 = Response(
+            'http://example.com/pattern_2/page.html',
+            HTML_UTF_8_CONTENT, headers={'content-type': 'text/html; charset=utf-8'}
+        )
+
+        id_1 = self.db_sink.save(response_1)
+        id_2 = self.db_sink.save(response_2)
+
+        self.assertListEqual(
+            [row['id'] for row in self.db_sink.query('pattern')],
+            [id_1, id_2],
+        )

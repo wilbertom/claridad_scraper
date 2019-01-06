@@ -1,12 +1,81 @@
 #!/usr/bin/env python
 import logging
+import os
+
+import click
+import dataset
 
 from claridad_scraper import Scraper, DBSink
-from claridad_scraper.globals import BASE_SITE
+from claridad import Article, ArticleMetaDataNotFound, Author
+from claridad_wordpress import PostExporter, UserExporter, User
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.option('--db-path')
+@click.option('--site')
+def scrape(db_path, site):
+    logging.basicConfig(level=logging.INFO)
+
+    db_sink = DBSink(db_path)
+    scraper = Scraper(site, db_sink)
+
+    scraper.run()
+
+
+@cli.command()
+@click.option('--db-path')
+@click.option('--to')
+def export_posts(db_path, to):
+    db_sink = DBSink(db_path)
+
+    errors = 0
+    exported = 0
+    skipped = 0
+
+    f = open(to, 'w')
+    exporter = PostExporter(f)
+
+    for row in db_sink.query('content.html?news='):
+        # TODO: drop #comments in query
+        if row['link'].endswith('#comments'):
+            continue
+
+        article = Article(row['id'], row['text'])
+
+        if article.is_summary:
+            skipped += 1
+            continue
+
+        try:
+            exporter.export(article)
+            exported += 1
+        except ArticleMetaDataNotFound:
+            errors += 1
+
+    print('Finished with {} errors, {} exported, {} skipped.'.format(errors, exported, skipped))
+
+
+@cli.command()
+@click.option('--db-path')
+@click.option('--to')
+@click.option('--starting-id', type=int)
+def export_users(db_path, to, starting_id):
+    f = open(to, 'w')
+    exporter = UserExporter(f)
+    db_sink = DBSink(db_path)
+    user_id = starting_id
+
+    for row in db_sink.query('perfilautor.html?aid='):
+        author = Author(db_sink.text(row))
+        user = User(user_id, author.username, author.name, author.email)
+        exporter.export(user)
+        user_id += 1
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    db_sink = DBSink('out')
-    scraper = Scraper(BASE_SITE, db_sink)
-    scraper.run()
+    cli()

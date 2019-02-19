@@ -28,6 +28,15 @@ class Article:
         return self._soup.find(id='content3').find('h2').get_text()
 
     @property
+    def category(self):
+        return self._soup.find(id='estasen').get_text().strip()
+
+    @property
+    def thumbnail(self):
+        images = [x['src'] for x in self._soup.findAll('img', {'class': 'mainPhotoInside2'})]
+        return 'http://www.claridadpuertorico.com' + images[0] if len(images) > 0 else None
+
+    @property
     def pdf_link(self):
         return 'http://www.claridadpuertorico.com/contentpdf.html?news={}'.format(
             self.content_id

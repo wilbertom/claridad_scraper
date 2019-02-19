@@ -17,8 +17,8 @@ class PostExporter(CsvExporter):
             # 'post_parent',
             # 'menu_order',
             'post_type',
-            # 'post_thumbnail',
-            # 'post_category',
+            'post_thumbnail',
+            'post_category',
             # 'post_tags',
             # 'tax_{taxonomy}',
             # '{custom_field_key}',
@@ -30,12 +30,14 @@ class PostExporter(CsvExporter):
 
     def row(self, article):
         return [
-            article.id,
+            '',
             slugify(article.author_name),
             article.date_published.strftime('%Y-%m-%d'),
             article.title,
             'publish',
             'post',
+            article.thumbnail,
+            article.category,
             'open',
             article.body,
         ]

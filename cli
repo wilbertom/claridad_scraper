@@ -2,6 +2,9 @@
 import logging
 import os
 
+from itertools import zip_longest
+
+
 import click
 import dataset
 
@@ -9,6 +12,27 @@ from claridad_scraper import Scraper, DBSink
 from claridad import Article, ArticleMetaDataNotFound, Author
 from claridad_wordpress import PostExporter, UserExporter, User
 
+def chunk_to_file(chunk, count):
+    f = open('articles_'+ str(count) +'.csv', 'w')
+    exporter = PostExporter(f)
+    for row in chunk:
+        # TODO: drop #comments in query
+        if row['link'] and row['link'].endswith('#comments'):
+            continue
+
+        article = Article(row['id'], row['text'])
+
+        if article.is_summary:
+            continue
+
+        try:
+            exporter.export(article)
+        except ArticleMetaDataNotFound:
+            continue
+
+def grouper(n, iterable, padvalue=None):
+    "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
+    return zip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
 
 @click.group()
 def cli():
@@ -33,35 +57,20 @@ def scraper(db_path, site):
 
 @cli.command()
 @click.option('--db-path', help='Path to directory where all data is saved in.')
-@click.option('--to', help='CSV file output.')
-def export_posts(db_path, to):
+@click.option('--chunk', help='Path to directory where all data is saved in.')
+def export_posts(db_path, chunk):
     db_sink = DBSink(db_path)
+    articles = db_sink.query('content.html?news=')
+    chunk_count = 0
 
-    errors = 0
-    exported = 0
-    skipped = 0
+    if chunk:
+        chunks = grouper(120, articles)
+    else:
+        chunks = articles
 
-    f = open(to, 'w')
-    exporter = PostExporter(f)
-
-    for row in db_sink.query('content.html?news='):
-        # TODO: drop #comments in query
-        if row['link'].endswith('#comments'):
-            continue
-
-        article = Article(row['id'], row['text'])
-
-        if article.is_summary:
-            skipped += 1
-            continue
-
-        try:
-            exporter.export(article)
-            exported += 1
-        except ArticleMetaDataNotFound:
-            errors += 1
-
-    print('Finished with {} errors, {} exported, {} skipped.'.format(errors, exported, skipped))
+    for chunk in chunks:
+        chunk_count += 1
+        chunk_to_file(chunk, chunk_count if chunk else 'all')
 
 
 @cli.command()
